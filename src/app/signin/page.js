@@ -8,18 +8,62 @@ import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const [form, setForm] = useState({
-    identifier: "", // email hoặc phone
+    phone: "", // Chỉ số điện thoại
     password: "",
   });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: validate & submit API
-    console.log("Đăng nhập:", form);
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/users/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: form.phone,
+          password: form.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.detail || "Đăng nhập thất bại");
+      } else {
+        setMessage("Đăng nhập thành công!");
+
+        // Lưu token / session nếu có
+        // localStorage.setItem("token", data.access_token);
+
+        // Điều hướng dựa vào role
+        const role = data.role; // backend cần trả về field 'role'
+
+        setTimeout(() => {
+          if (role === "customer") {
+            window.location.href = `/customer/${data.id}`;
+          } else if (role === "admin") {
+            window.location.href = `/admin/${data.id}`;
+          } else {
+            window.location.href = "/";
+          }
+        }, 1000);
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("Có lỗi xảy ra, vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,14 +78,26 @@ export default function LoginPage() {
           Đăng nhập
         </h2>
 
+        {message && (
+          <div
+            className={`p-2 mb-4 text-center rounded ${
+              message.includes("thành công")
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {message}
+          </div>
+        )}
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <Label>Email hoặc Số điện thoại</Label>
+            <Label>Số điện thoại</Label>
             <Input
-              type="text"
-              name="identifier"
-              placeholder="email@example.com hoặc 0912345678"
-              value={form.identifier}
+              type="tel"
+              name="phone"
+              placeholder="0912345678"
+              value={form.phone}
               onChange={handleChange}
               required
             />
@@ -62,8 +118,9 @@ export default function LoginPage() {
           <Button
             type="submit"
             className="w-full mt-2 bg-blue-600 hover:bg-blue-700"
+            disabled={loading}
           >
-            Đăng nhập
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
         </form>
 

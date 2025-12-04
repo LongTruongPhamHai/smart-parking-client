@@ -8,20 +8,59 @@ import { Label } from "@/components/ui/label";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
+    name: "",
     email: "",
     phone: "",
     password: "",
     confirmPassword: "",
   });
 
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: validate & submit API
-    console.log("Đăng ký:", form);
+
+    if (form.password !== form.confirmPassword) {
+      setMessage("Mật khẩu và xác nhận mật khẩu không khớp.");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/users/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          password: form.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(data.detail || "Đăng ký thất bại");
+      } else {
+        setMessage("Đăng ký thành công! Chuyển sang đăng nhập...");
+        setTimeout(() => {
+          window.location.href = "/signin";
+        }, 1500);
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("Có lỗi xảy ra, vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,7 +75,31 @@ export default function RegisterPage() {
           Đăng ký tài khoản
         </h2>
 
+        {message && (
+          <div
+            className={`p-2 mb-4 text-center rounded ${
+              message.includes("thành công")
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {message}
+          </div>
+        )}
+
         <form className="space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <Label>Họ và tên</Label>
+            <Input
+              type="text"
+              name="name"
+              placeholder="Nguyễn Văn A"
+              value={form.name}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
           <div>
             <Label>Email</Label>
             <Input
@@ -88,8 +151,9 @@ export default function RegisterPage() {
           <Button
             type="submit"
             className="w-full mt-2 bg-blue-600 hover:bg-blue-700"
+            disabled={loading}
           >
-            Đăng ký
+            {loading ? "Đang đăng ký..." : "Đăng ký"}
           </Button>
         </form>
 
