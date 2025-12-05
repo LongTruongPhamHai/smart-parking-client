@@ -2,45 +2,44 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Car } from "lucide-react";
+import Link from "next/link";
 
 export default function Page() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+    <main className="flex flex-col items-center justify-center min-h-full bg-white text-black px-6">
       <motion.div
-        initial={{ opacity: 0, y: -50 }}
+        initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="flex flex-col items-center space-y-6"
+        className="max-w-2xl text-center space-y-6"
       >
-        {/* Logo / Icon */}
-        <Car className="w-20 h-20 text-blue-600" />
-
-        {/* Tên hệ thống */}
-        <h1 className="text-4xl font-bold text-gray-800 text-center">
-          Hệ thống Bãi đỗ xe Thông minh
-        </h1>
-        <p className="text-gray-600 text-center max-w-md">
-          Quản lý chỗ đỗ, thanh toán nhanh chóng và giám sát phương tiện dễ
-          dàng.
+        <h1 className="text-3xl font-bold">Hệ thống Bãi đỗ xe thông minh</h1>
+        <p className="text-gray-700 leading-relaxed">
+          Hệ thống bãi đỗ xe thông minh giúp người dùng dễ dàng tìm kiếm, đặt
+          chỗ và quản lý phương tiện của mình. Với công nghệ hiện đại, hệ thống
+          mang lại trải nghiệm tiện lợi, tiết kiệm thời gian và tối ưu hóa không
+          gian đỗ xe trong đô thị.
         </p>
 
-        {/* Nút Đăng nhập / Đăng ký */}
-        <div className="flex space-x-4">
-          <Button
-            className="bg-blue-600 text-white hover:bg-blue-700"
-            onClick={() => (window.location.href = "/signin")}
-          >
-            Đăng nhập
-          </Button>
-          <Button
-            className="bg-gray-200 text-gray-800 hover:bg-gray-300"
-            onClick={() => (window.location.href = "/signup")}
-          >
-            Đăng ký
-          </Button>
+        <div className="flex gap-4 justify-center">
+          <Link href="/signup">
+            <Button
+              variant="default"
+              className="bg-black text-white hover:bg-gray-800"
+            >
+              Đăng ký
+            </Button>
+          </Link>
+          <Link href="/signin">
+            <Button
+              variant="outline"
+              className="border-black text-black hover:bg-gray-100"
+            >
+              Đăng nhập
+            </Button>
+          </Link>
         </div>
       </motion.div>
-    </div>
+    </main>
   );
 }

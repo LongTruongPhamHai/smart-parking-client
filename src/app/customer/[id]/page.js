@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import {
   Chart,
-  Line,
   Title,
   Tooltip,
   Legend,
@@ -18,7 +22,7 @@ import {
 import { Line as LineChart } from "react-chartjs-2";
 import { useParams } from "next/navigation";
 
-// Register chart.js components
+// Đăng ký chart.js components
 Chart.register(
   Title,
   Tooltip,
@@ -36,7 +40,7 @@ export default function CustomerPage() {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    // Dữ liệu tạm thời giả lập
+    // 👉 Data tạm (mock data)
     const mockData = {
       user: {
         id,
@@ -88,19 +92,21 @@ export default function CustomerPage() {
       <Card>
         <CardHeader>
           <CardTitle>Thông tin khách hàng</CardTitle>
+          <CardDescription>Chi tiết hồ sơ người dùng</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div>
-            <strong>Họ tên:</strong> {userData.user.name}
+            <span className="font-medium">Họ tên:</span> {userData.user.name}
           </div>
           <div>
-            <strong>Email:</strong> {userData.user.email}
+            <span className="font-medium">Email:</span> {userData.user.email}
           </div>
           <div>
-            <strong>Số điện thoại:</strong> {userData.user.phone}
+            <span className="font-medium">Số điện thoại:</span>{" "}
+            {userData.user.phone}
           </div>
           <div>
-            <strong>Vai trò:</strong>{" "}
+            <span className="font-medium">Vai trò:</span>{" "}
             {userData.user.role === "customer" ? "Khách hàng" : "Admin"}
           </div>
         </CardContent>
@@ -109,12 +115,13 @@ export default function CustomerPage() {
       {/* Vehicles */}
       <Card>
         <CardHeader>
-          <CardTitle>Thông tin phương tiện</CardTitle>
+          <CardTitle>Phương tiện</CardTitle>
+          <CardDescription>Danh sách xe đã đăng ký</CardDescription>
         </CardHeader>
         <CardContent>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b">
+          <table className="w-full text-left text-sm border-collapse divide-y">
+            <thead className="bg-muted">
+              <tr>
                 <th className="p-2">Biển số</th>
                 <th className="p-2">Loại xe</th>
                 <th className="p-2">Ngày đăng ký</th>
@@ -122,7 +129,7 @@ export default function CustomerPage() {
             </thead>
             <tbody>
               {userData.vehicles.map((v, idx) => (
-                <tr key={idx} className="border-b">
+                <tr key={idx} className="divide-x">
                   <td className="p-2">{v.plate}</td>
                   <td className="p-2">{v.type}</td>
                   <td className="p-2">{v.registeredAt}</td>
@@ -136,11 +143,12 @@ export default function CustomerPage() {
       {/* Wallet */}
       <Card>
         <CardHeader>
-          <CardTitle>Thông tin tài khoản</CardTitle>
+          <CardTitle>Tài khoản ví</CardTitle>
+          <CardDescription>Số dư hiện tại</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-xl font-semibold">
-            Số dư ví: {userData.wallet.balance.toLocaleString()} VNĐ
+          <div className="text-2xl font-bold text-primary">
+            {userData.wallet.balance.toLocaleString()} VNĐ
           </div>
         </CardContent>
       </Card>
@@ -149,13 +157,16 @@ export default function CustomerPage() {
       <Card>
         <CardHeader>
           <CardTitle>Lịch sử đỗ xe / thanh toán</CardTitle>
+          <CardDescription>Chi tiết giao dịch gần đây</CardDescription>
         </CardHeader>
         <CardContent>
-          <LineChart data={chartData} />
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b">
+          <div className="mb-4">
+            <LineChart data={chartData} />
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm border-collapse divide-y">
+              <thead className="bg-muted">
+                <tr>
                   <th className="p-2">Ngày</th>
                   <th className="p-2">Bãi đỗ</th>
                   <th className="p-2">Số tiền (VNĐ)</th>
@@ -163,7 +174,7 @@ export default function CustomerPage() {
               </thead>
               <tbody>
                 {userData.parkingHistory.map((h, idx) => (
-                  <tr key={idx} className="border-b">
+                  <tr key={idx} className="divide-x">
                     <td className="p-2">{h.date}</td>
                     <td className="p-2">{h.location}</td>
                     <td className="p-2">{h.amount.toLocaleString()}</td>

@@ -64,14 +64,14 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-full flex items-center justify-center bg-gray-50 px-4">
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md"
+        className="bg-white rounded-xl shadow-md p-8 w-full max-w-md border border-gray-200"
       >
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
           Đăng ký tài khoản
         </h2>
 
@@ -79,7 +79,7 @@ export default function RegisterPage() {
           <div
             className={`p-2 mb-4 text-center rounded ${
               message.includes("thành công")
-                ? "bg-green-100 text-green-800"
+                ? "bg-gray-900 text-white"
                 : "bg-red-100 text-red-800"
             }`}
           >
@@ -89,7 +89,7 @@ export default function RegisterPage() {
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <Label>Họ và tên</Label>
+            <Label className="text-gray-700 mb-2">Họ và tên</Label>
             <Input
               type="text"
               name="name"
@@ -97,11 +97,12 @@ export default function RegisterPage() {
               value={form.name}
               onChange={handleChange}
               required
+              className="border-gray-300 focus:border-black focus:ring-black"
             />
           </div>
 
           <div>
-            <Label>Email</Label>
+            <Label className="text-gray-700 mb-2">Email</Label>
             <Input
               type="email"
               name="email"
@@ -109,11 +110,12 @@ export default function RegisterPage() {
               value={form.email}
               onChange={handleChange}
               required
+              className="border-gray-300 focus:border-black focus:ring-black"
             />
           </div>
 
           <div>
-            <Label>Số điện thoại</Label>
+            <Label className="text-gray-700 mb-2">Số điện thoại</Label>
             <Input
               type="tel"
               name="phone"
@@ -121,11 +123,12 @@ export default function RegisterPage() {
               value={form.phone}
               onChange={handleChange}
               required
+              className="border-gray-300 focus:border-black focus:ring-black"
             />
           </div>
 
           <div>
-            <Label>Mật khẩu</Label>
+            <Label className="text-gray-700 mb-2">Mật khẩu</Label>
             <Input
               type="password"
               name="password"
@@ -133,11 +136,12 @@ export default function RegisterPage() {
               value={form.password}
               onChange={handleChange}
               required
+              className="border-gray-300 focus:border-black focus:ring-black"
             />
           </div>
 
           <div>
-            <Label>Xác nhận mật khẩu</Label>
+            <Label className="text-gray-700 mb-2">Xác nhận mật khẩu</Label>
             <Input
               type="password"
               name="confirmPassword"
@@ -145,25 +149,33 @@ export default function RegisterPage() {
               value={form.confirmPassword}
               onChange={handleChange}
               required
+              className="border-gray-300 focus:border-black focus:ring-black"
             />
           </div>
 
           <Button
             type="submit"
-            className="w-full mt-2 bg-blue-600 hover:bg-blue-700"
+            className="w-full mt-2 bg-black text-white hover:bg-gray-800"
             disabled={loading}
           >
             {loading ? "Đang đăng ký..." : "Đăng ký"}
           </Button>
         </form>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-4 flex flex-col gap-2">
           <Button
             variant="link"
-            className="text-gray-500 hover:text-blue-600"
+            className="text-gray-600 hover:text-black"
             onClick={() => (window.location.href = "/signin")}
           >
             Đã có tài khoản? Đăng nhập
+          </Button>
+          <Button
+            variant="outline"
+            className="border-black text-black hover:bg-gray-100"
+            onClick={() => (window.location.href = "/")}
+          >
+            Quay lại
           </Button>
         </div>
       </motion.div>
