@@ -1,184 +1,125 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function RegisterPage() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
+export default function SignupPage() {
+  const router = useRouter();
 
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState(null);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  /* =======================
+     HANDLE SIGNUP
+  ======================= */
+  const handleSignup = async (e) => {
     e.preventDefault();
-
-    if (form.password !== form.confirmPassword) {
-      setMessage("Mật khẩu và xác nhận mật khẩu không khớp.");
-      return;
-    }
-
+    setError(null);
     setLoading(true);
-    setMessage("");
 
     try {
       const res = await fetch("http://127.0.0.1:8000/users/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          password: form.password,
+          name,
+          phone,
+          password,
         }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setMessage(data.detail || "Đăng ký thất bại");
-      } else {
-        setMessage("Đăng ký thành công! Chuyển sang đăng nhập...");
-        setTimeout(() => {
-          window.location.href = "/signin";
-        }, 1500);
+        const data = await res.json();
+        throw new Error(data?.detail || "Đăng ký thất bại");
       }
+
+      // Đăng ký thành công → chuyển sang trang đăng nhập
+      router.push("/signin");
     } catch (err) {
-      console.error(err);
-      setMessage("Có lỗi xảy ra, vui lòng thử lại.");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-full flex items-center justify-center bg-gray-50 px-4">
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <motion.div
-        initial={{ opacity: 0, y: 50 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="bg-white rounded-xl shadow-md p-8 w-full max-w-md border border-gray-200"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
       >
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-          Đăng ký tài khoản
-        </h2>
+        <Card className="rounded-2xl shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center">
+              Đăng ký tài khoản
+            </CardTitle>
+          </CardHeader>
 
-        {message && (
-          <div
-            className={`p-2 mb-4 text-center rounded ${
-              message.includes("thành công")
-                ? "bg-gray-900 text-white"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
-            {message}
-          </div>
-        )}
+          <CardContent>
+            <form onSubmit={handleSignup} className="space-y-4">
+              {/* NAME */}
+              <div className="space-y-1">
+                <Label>Họ và tên</Label>
+                <Input
+                  placeholder="Nguyễn Văn A"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <Label className="text-gray-700 mb-2">Họ và tên</Label>
-            <Input
-              type="text"
-              name="name"
-              placeholder="Nguyễn Văn A"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className="border-gray-300 focus:border-black focus:ring-black"
-            />
-          </div>
+              {/* PHONE */}
+              <div className="space-y-1">
+                <Label>Số điện thoại</Label>
+                <Input
+                  placeholder="0123456789"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div>
-            <Label className="text-gray-700 mb-2">Email</Label>
-            <Input
-              type="email"
-              name="email"
-              placeholder="email@example.com"
-              value={form.email}
-              onChange={handleChange}
-              required
-              className="border-gray-300 focus:border-black focus:ring-black"
-            />
-          </div>
+              {/* PASSWORD */}
+              <div className="space-y-1">
+                <Label>Mật khẩu</Label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div>
-            <Label className="text-gray-700 mb-2">Số điện thoại</Label>
-            <Input
-              type="tel"
-              name="phone"
-              placeholder="0912345678"
-              value={form.phone}
-              onChange={handleChange}
-              required
-              className="border-gray-300 focus:border-black focus:ring-black"
-            />
-          </div>
+              {/* ERROR */}
+              {error && (
+                <p className="text-sm text-red-500 text-center">{error}</p>
+              )}
 
-          <div>
-            <Label className="text-gray-700 mb-2">Mật khẩu</Label>
-            <Input
-              type="password"
-              name="password"
-              placeholder="Nhập mật khẩu"
-              value={form.password}
-              onChange={handleChange}
-              required
-              className="border-gray-300 focus:border-black focus:ring-black"
-            />
-          </div>
-
-          <div>
-            <Label className="text-gray-700 mb-2">Xác nhận mật khẩu</Label>
-            <Input
-              type="password"
-              name="confirmPassword"
-              placeholder="Nhập lại mật khẩu"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              required
-              className="border-gray-300 focus:border-black focus:ring-black"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full mt-2 bg-black text-white hover:bg-gray-800"
-            disabled={loading}
-          >
-            {loading ? "Đang đăng ký..." : "Đăng ký"}
-          </Button>
-        </form>
-
-        <div className="text-center mt-4 flex flex-col gap-2">
-          <Button
-            variant="link"
-            className="text-gray-600 hover:text-black"
-            onClick={() => (window.location.href = "/signin")}
-          >
-            Đã có tài khoản? Đăng nhập
-          </Button>
-          <Button
-            variant="outline"
-            className="border-black text-black hover:bg-gray-100"
-            onClick={() => (window.location.href = "/")}
-          >
-            Quay lại
-          </Button>
-        </div>
+              {/* SUBMIT */}
+              <Button
+                type="submit"
+                className="w-full bg-black text-white hover:bg-gray-800"
+                disabled={loading}
+              >
+                {loading ? "Đang đăng ký..." : "Đăng ký"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </motion.div>
-    </div>
+    </main>
   );
 }
