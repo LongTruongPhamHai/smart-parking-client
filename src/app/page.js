@@ -4,8 +4,20 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Car, Wallet, User, LogOut, BarChart3, Users } from "lucide-react";
+import { 
+  Car, 
+  Wallet, 
+  User, 
+  LogOut, 
+  BarChart3, 
+  Users, 
+  Plus, 
+  X, 
+  Loader2, 
+  FileText // <-- Đã thêm icon hóa đơn vào đây
+} from "lucide-react";
 
 export default function Page() {
   const [parkingSlots, setParkingSlots] = useState([]);
@@ -17,8 +29,13 @@ export default function Page() {
   const [invoices, setInvoices] = useState([]);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
+  // --- STATE CHO PHẦN NẠP TIỀN ---
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [isDepositing, setIsDepositing] = useState(false);
+
   /* =======================
-     FETCH USER
+      FETCH USER
   ======================= */
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -47,7 +64,7 @@ export default function Page() {
   }, []);
 
   /* =======================
-     FETCH PARKING LOTS
+      FETCH PARKING LOTS
   ======================= */
   useEffect(() => {
     const fetchParkingLots = async () => {
@@ -68,7 +85,7 @@ export default function Page() {
   }, []);
 
   /* =======================
-     FETCH INVOICES (ADMIN)
+      FETCH INVOICES (ADMIN)
   ======================= */
   useEffect(() => {
     if (!currentUser || currentUser.role !== "admin") return;
@@ -100,11 +117,48 @@ export default function Page() {
     .reduce((sum, inv) => sum + inv.total_price, 0);
 
   /* =======================
-     LOGOUT
+      LOGOUT
   ======================= */
   const handleLogout = () => {
     localStorage.removeItem("user");
     setCurrentUser(null);
+  };
+
+  /* =======================
+      HANDLE DEPOSIT (NẠP TIỀN)
+  ======================= */
+  const handleDeposit = async () => {
+    if (!depositAmount || isNaN(Number(depositAmount)) || Number(depositAmount) <= 0) {
+      alert("Nhập số tiền cho đàng hoàng vào anh ơi!");
+      return;
+    }
+
+    setIsDepositing(true);
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/users/${currentUser.id}/add-balance?amount=${depositAmount}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Lỗi nạp tiền");
+
+      const updatedUser = await res.json();
+      
+      setCurrentUser(updatedUser);
+      setDepositAmount("");
+      setShowDeposit(false);
+      alert("Đã nạp thành công! Giàu rồi!");
+    } catch (error) {
+      console.error(error);
+      alert("Nạp tiền thất bại. Chắc server đang nghỉ trưa.");
+    } finally {
+      setIsDepositing(false);
+    }
   };
 
   return (
@@ -138,33 +192,88 @@ export default function Page() {
                 </Link>
               </div>
             ) : (
-              <Card className="w-72 rounded-2xl shadow-lg">
+              <Card className="w-80 rounded-2xl shadow-lg transition-all duration-300">
                 <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center gap-2 font-bold text-lg">
-                    <User className="w-5 h-5" /> {currentUser.name}
+                  {/* User Info Header */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 font-bold text-lg">
+                      <User className="w-5 h-5" /> {currentUser.name}
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-gray-200 font-bold uppercase">
+                      {currentUser.role}
+                    </span>
                   </div>
 
                   <div className="text-sm text-gray-600">
                     📞 {currentUser.phone}
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm">
-                    <Wallet className="w-4 h-4" />{" "}
-                    <span className="font-semibold">
-                      {currentUser.balance.toLocaleString()} ₫
-                    </span>
+                  {/* Balance Display & Deposit Button */}
+                  <div className="flex items-center justify-between p-2 bg-gray-100 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Wallet className="w-4 h-4 text-green-600" />
+                      <span className="font-bold text-green-700">
+                        {currentUser.balance?.toLocaleString()} ₫
+                      </span>
+                    </div>
+                    <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-6 w-6 p-0 hover:bg-gray-200 rounded-full"
+                        onClick={() => setShowDeposit(!showDeposit)}
+                    >
+                        {showDeposit ? <X className="w-4 h-4"/> : <Plus className="w-4 h-4"/>}
+                    </Button>
                   </div>
 
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs px-2 py-1 rounded-full bg-gray-200 font-bold uppercase">
-                      {currentUser.role}
-                    </span>
+                  {/* Form Nạp Tiền */}
+                  {showDeposit && (
+                    <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="space-y-2 border-t pt-2"
+                    >
+                        <p className="text-xs font-semibold text-gray-500">Nạp thêm lúa:</p>
+                        <div className="flex gap-2">
+                            <Input 
+                                type="number" 
+                                placeholder="Nhập số tiền..." 
+                                className="h-8 text-sm"
+                                value={depositAmount}
+                                onChange={(e) => setDepositAmount(e.target.value)}
+                            />
+                            <Button 
+                                size="sm" 
+                                className="h-8 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={handleDeposit}
+                                disabled={isDepositing}
+                            >
+                                {isDepositing ? <Loader2 className="w-3 h-3 animate-spin"/> : "Nạp"}
+                            </Button>
+                        </div>
+                    </motion.div>
+                  )}
+
+                  {/* --- NÚT XEM HÓA ĐƠN MỚI THÊM VÀO --- */}
+                  <div className="pt-2 mt-2 border-t">
+                    <Link href="/invoices" className="w-full block">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start gap-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                      >
+                        <FileText className="w-4 h-4" /> Xem hóa đơn của tôi
+                      </Button>
+                    </Link>
+                  </div>
+
+                  <div className="flex justify-end pt-2 border-t">
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={handleLogout}
+                      className="w-full"
                     >
-                      <LogOut className="w-4 h-4 mr-1" /> Thoát
+                      <LogOut className="w-4 h-4 mr-1" /> Đăng xuất
                     </Button>
                   </div>
                 </CardContent>
