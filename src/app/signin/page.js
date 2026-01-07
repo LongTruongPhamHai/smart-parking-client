@@ -51,7 +51,7 @@ export default function SigninPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4 py-12">
+    <main className="min-h-screen flex items-center justify-center bg-linear-to-b from-gray-50 to-gray-100 px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -90,10 +90,9 @@ export default function SigninPage() {
                 />
               </div>
 
-              {/* SUBMIT */}
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold py-2 rounded-full shadow-lg hover:scale-105 transition-transform"
+                className="w-full bg-linear-to-r from-green-400 to-blue-500 text-white font-semibold py-2 rounded-full shadow-lg hover:scale-105 transition-transform"
                 disabled={loading}
               >
                 {loading ? "Signing in..." : "Sign In"}

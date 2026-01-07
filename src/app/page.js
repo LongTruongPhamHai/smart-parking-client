@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Car } from "lucide-react";
 
-// ==================== BACKEND URL CONFIG ====================
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
 
@@ -15,14 +14,13 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ===================== FETCH PARKING LOTS =====================
   useEffect(() => {
     const fetchParkingLots = async () => {
       try {
         const res = await fetch(`${BACKEND_URL}/parking-lots/`);
         if (!res.ok) throw new Error();
         const data = await res.json();
-        setParkingSlots(data.slice(0, 3)); // only 3 slots
+        setParkingSlots(data.slice(0, 3));
       } catch (err) {
         setError("Failed to load parking lots");
       } finally {
@@ -34,8 +32,7 @@ export default function Page() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 px-6 py-12">
-      {/* HEADER */}
+    <main className="min-h-screen bg-linear-to-b from-gray-50 to-gray-100 px-6 py-12">
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -52,7 +49,7 @@ export default function Page() {
 
         <div className="flex gap-3 mt-4 md:mt-0">
           <Link href="/signup">
-            <Button className="bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold px-6 py-2 rounded-full shadow-lg hover:scale-105 transition-transform">
+            <Button className="bg-linear-to-r from-green-400 to-blue-500 text-white font-semibold px-6 py-2 rounded-full shadow-lg hover:scale-105 transition-transform">
               Sign Up
             </Button>
           </Link>
@@ -64,7 +61,6 @@ export default function Page() {
         </div>
       </motion.header>
 
-      {/* PARKING SLOTS GRID */}
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -97,8 +93,8 @@ export default function Page() {
                   <div
                     className={`p-4 rounded-full ${
                       isAvailable
-                        ? "bg-gradient-to-tr from-green-400 to-green-600 text-white"
-                        : "bg-gradient-to-tr from-red-400 to-red-600 text-white"
+                        ? "bg-linear-to-tr from-green-400 to-green-600 text-white"
+                        : "bg-linear-to-tr from-red-400 to-red-600 text-white"
                     }`}
                   >
                     <Car className="w-12 h-12" />

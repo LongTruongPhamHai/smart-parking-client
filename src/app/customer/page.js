@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Car, Wallet, User, LogOut } from "lucide-react";
 
 function formatDurationFromHours(hoursFloat) {
@@ -15,6 +13,24 @@ function formatDurationFromHours(hoursFloat) {
   const s = totalSeconds % 60;
   const pad = (n) => String(n).padStart(2, "0");
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function formatDateToGMT7(datetimeString) {
+  if (!datetimeString) return "Processing";
+  const date = new Date(datetimeString);
+
+  const dateUTC7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+
+  const pad = (n) => String(n).padStart(2, "0");
+
+  const y = dateUTC7.getFullYear();
+  const m = pad(dateUTC7.getMonth() + 1);
+  const d = pad(dateUTC7.getDate());
+  const h = pad(dateUTC7.getHours());
+  const min = pad(dateUTC7.getMinutes());
+  const s = pad(dateUTC7.getSeconds());
+
+  return `${d}/${m}/${y} ${h}:${min}:${s}`;
 }
 
 export default function CustomerPage() {
@@ -27,14 +43,10 @@ export default function CustomerPage() {
   const [loading, setLoading] = useState(true);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
-  // Deposit
   const [showDeposit, setShowDeposit] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
   const [isDepositing, setIsDepositing] = useState(false);
 
-  // ======================
-  // FETCH USER INFO
-  // ======================
   const fetchUser = useCallback(async () => {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) return;
@@ -51,9 +63,6 @@ export default function CustomerPage() {
     }
   }, [BACKEND_URL]);
 
-  // ======================
-  // FETCH PARKING LOTS
-  // ======================
   const fetchParking = useCallback(async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/parking-lots/`);
@@ -67,9 +76,6 @@ export default function CustomerPage() {
     }
   }, [BACKEND_URL]);
 
-  // ======================
-  // FETCH USER INVOICES
-  // ======================
   const fetchInvoices = useCallback(async () => {
     if (!currentUser) return;
 
@@ -86,9 +92,6 @@ export default function CustomerPage() {
     }
   }, [BACKEND_URL, currentUser]);
 
-  // ======================
-  // INITIAL FETCH
-  // ======================
   useEffect(() => {
     fetchUser();
     fetchParking();
@@ -98,17 +101,11 @@ export default function CustomerPage() {
     fetchInvoices();
   }, [fetchInvoices]);
 
-  // ======================
-  // LOGOUT
-  // ======================
   const handleLogout = () => {
     localStorage.removeItem("user");
     window.location.href = "/";
   };
 
-  // ======================
-  // HANDLE DEPOSIT
-  // ======================
   const handleDeposit = async () => {
     if (
       !depositAmount ||
@@ -136,7 +133,6 @@ export default function CustomerPage() {
       );
       if (!res.ok) throw new Error("Deposit failed");
 
-      // Refresh user info & invoices after successful deposit
       await fetchUser();
       await fetchInvoices();
 
@@ -162,7 +158,6 @@ export default function CustomerPage() {
         </Button>
       </div>
 
-      {/* CUSTOMER INFO */}
       <Card className="mb-8 rounded-2xl shadow-md">
         <CardContent className="space-y-2">
           <h2 className="text-xl font-bold">User Information</h2>
@@ -172,7 +167,6 @@ export default function CustomerPage() {
           <p>Role: {currentUser.role}</p>
           <p>Balance: {currentUser.balance?.toLocaleString()}₫</p>
 
-          {/* DEPOSIT */}
           <div className="mt-2">
             <Button
               size="sm"
@@ -204,7 +198,6 @@ export default function CustomerPage() {
         </CardContent>
       </Card>
 
-      {/* PARKING SLOTS */}
       <h2 className="text-2xl font-bold mb-4">Parking Slot Status</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
         {parkingSlots.map((slot) => (
@@ -232,7 +225,6 @@ export default function CustomerPage() {
         ))}
       </div>
 
-      {/* INVOICES */}
       <h2 className="text-2xl font-bold mb-4">My Invoices</h2>
       {invoiceLoading ? (
         <p>Loading invoices...</p>
@@ -256,12 +248,12 @@ export default function CustomerPage() {
                 <tr key={inv.id} className="text-center border-t">
                   <td className="p-2 border">{inv.id}</td>
                   <td className="p-2 border">
-                    {new Date(inv.start_time).toLocaleString()}
+                    {formatDateToGMT7(inv.start_time)}
                   </td>
                   <td className="p-2 border">
                     {inv.end_time
-                      ? new Date(inv.end_time).toLocaleString()
-                      : "Processing"}
+                      ? formatDateToGMT7(inv.end_time)
+                      : "On process"}
                   </td>
                   <td className="p-2 border">
                     {inv.duration

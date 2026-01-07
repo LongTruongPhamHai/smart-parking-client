@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Wallet, User, LogOut, BarChart3, Users, Car, X } from "lucide-react";
-import Link from "next/link";
 
 function formatDurationFromHours(hoursFloat) {
   const totalSeconds = Math.floor(hoursFloat * 3600);
@@ -15,6 +12,24 @@ function formatDurationFromHours(hoursFloat) {
   const s = totalSeconds % 60;
   const pad = (n) => String(n).padStart(2, "0");
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function formatDateToGMT7(datetimeString) {
+  if (!datetimeString) return "Processing";
+  const date = new Date(datetimeString);
+
+  const dateUTC7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+
+  const pad = (n) => String(n).padStart(2, "0");
+
+  const y = dateUTC7.getFullYear();
+  const m = pad(dateUTC7.getMonth() + 1);
+  const d = pad(dateUTC7.getDate());
+  const h = pad(dateUTC7.getHours());
+  const min = pad(dateUTC7.getMinutes());
+  const s = pad(dateUTC7.getSeconds());
+
+  return `${d}/${m}/${y} ${h}:${min}:${s}`;
 }
 
 export default function AdminPage() {
@@ -29,9 +44,6 @@ export default function AdminPage() {
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [userLoading, setUserLoading] = useState(false);
 
-  // ======================
-  // FETCH ADMIN INFO
-  // ======================
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) return;
@@ -52,9 +64,6 @@ export default function AdminPage() {
     fetchUser();
   }, []);
 
-  // ======================
-  // FETCH PARKING LOTS
-  // ======================
   useEffect(() => {
     const fetchParking = async () => {
       try {
@@ -69,9 +78,6 @@ export default function AdminPage() {
     fetchParking();
   }, []);
 
-  // ======================
-  // FETCH USERS
-  // ======================
   useEffect(() => {
     const fetchUsers = async () => {
       setUserLoading(true);
@@ -89,9 +95,6 @@ export default function AdminPage() {
     fetchUsers();
   }, []);
 
-  // ======================
-  // FETCH INVOICES
-  // ======================
   useEffect(() => {
     const fetchInvoices = async () => {
       setInvoiceLoading(true);
@@ -109,17 +112,11 @@ export default function AdminPage() {
     fetchInvoices();
   }, []);
 
-  // ======================
-  // LOGOUT
-  // ======================
   const handleLogout = () => {
     localStorage.removeItem("user");
     window.location.href = "/";
   };
 
-  // ======================
-  // UPDATE PARKING STATUS
-  // ======================
   const toggleParkingStatus = async (slot) => {
     const newStatus = slot.status === "available" ? "occupied" : "available";
     if (
@@ -142,9 +139,6 @@ export default function AdminPage() {
     }
   };
 
-  // ======================
-  // DELETE USER
-  // ======================
   const deleteUser = async (user_id) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
     try {
@@ -158,9 +152,6 @@ export default function AdminPage() {
     }
   };
 
-  // ======================
-  // CALCULATE REVENUE
-  // ======================
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total_price, 0);
   const todayRevenue = invoices
     .filter(
@@ -182,7 +173,6 @@ export default function AdminPage() {
         </Button>
       </div>
 
-      {/* ADMIN INFO */}
       <Card className="mb-8 rounded-2xl shadow-md">
         <CardContent className="space-y-2">
           <h2 className="text-xl font-bold">Admin Information</h2>
@@ -196,7 +186,6 @@ export default function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* PARKING STATUS */}
       <h2 className="text-2xl font-bold mb-4">Parking Status</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
         {parkingSlots.map((slot) => (
@@ -228,7 +217,6 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* REVENUE */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <Card className="rounded-2xl shadow-md">
           <CardContent className="space-y-2">
@@ -252,7 +240,6 @@ export default function AdminPage() {
         </Card>
       </div>
 
-      {/* INVOICES */}
       <h2 className="text-2xl font-bold mb-4">Invoices</h2>
       {invoiceLoading ? (
         <p>Loading invoices...</p>
@@ -276,12 +263,12 @@ export default function AdminPage() {
                   <td className="p-2 border">{inv.id}</td>
                   <td className="p-2 border">{inv.user_id}</td>
                   <td className="p-2 border">
-                    {new Date(inv.start_time).toLocaleString()}
+                    {formatDateToGMT7(inv.start_time)}
                   </td>
                   <td className="p-2 border">
                     {inv.end_time
-                      ? new Date(inv.end_time).toLocaleString()
-                      : "Processing"}
+                      ? formatDateToGMT7(inv.end_time)
+                      : "On process"}
                   </td>
                   <td className="p-2 border">
                     {inv.duration
@@ -301,7 +288,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* USERS */}
       <h2 className="text-2xl font-bold mb-4">Users List</h2>
       {userLoading ? (
         <p>Loading users...</p>

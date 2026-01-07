@@ -22,9 +22,6 @@ export default function SignupPage() {
   const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
 
-  /* =======================
-     HANDLE SIGNUP
-  ======================= */
   const handleSignup = async (e) => {
     e.preventDefault();
     setError(null);
@@ -47,7 +44,6 @@ export default function SignupPage() {
         throw new Error(data?.detail || "Signup failed");
       }
 
-      // Success → redirect to sign in page
       router.push("/signin");
     } catch (err) {
       setError(err.message);
@@ -57,7 +53,7 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4 py-12">
+    <main className="min-h-screen flex items-center justify-center bg-linear-to-b from-gray-50 to-gray-100 px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -73,7 +69,6 @@ export default function SignupPage() {
 
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">
-              {/* NAME */}
               <div className="space-y-1">
                 <Label>Full Name</Label>
                 <Input
@@ -84,7 +79,6 @@ export default function SignupPage() {
                 />
               </div>
 
-              {/* EMAIL */}
               <div className="space-y-1">
                 <Label>Email</Label>
                 <Input
@@ -96,7 +90,6 @@ export default function SignupPage() {
                 />
               </div>
 
-              {/* PHONE */}
               <div className="space-y-1">
                 <Label>Phone Number</Label>
                 <Input
@@ -107,7 +100,6 @@ export default function SignupPage() {
                 />
               </div>
 
-              {/* PASSWORD */}
               <div className="space-y-1">
                 <Label>Password</Label>
                 <Input
@@ -119,21 +111,18 @@ export default function SignupPage() {
                 />
               </div>
 
-              {/* ERROR */}
               {error && (
                 <p className="text-sm text-red-500 text-center">{error}</p>
               )}
 
-              {/* SUBMIT */}
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold py-2 rounded-full shadow-lg hover:scale-105 transition-transform"
+                className="w-full bg-linear-to-r from-green-400 to-blue-500 text-white font-semibold py-2 rounded-full shadow-lg hover:scale-105 transition-transform"
                 disabled={loading}
               >
                 {loading ? "Signing up..." : "Sign Up"}
               </Button>
 
-              {/* NAVIGATION LINKS */}
               <div className="flex justify-between mt-2 text-sm text-gray-600">
                 <Link
                   href="/"
