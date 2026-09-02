@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, User, LogOut, BarChart3, Users, Car, X } from "lucide-react";
+import { Navbar } from "@/components/ui/navbar";
+import { toast } from "react-hot-toast";
+import { Wallet, User, LogOut, BarChart3, Users, Car, X, Plus, Edit, Search } from "lucide-react";
 
 function formatDurationFromHours(hoursFloat) {
   const totalSeconds = Math.floor(hoursFloat * 3600);
@@ -43,6 +45,15 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [userLoading, setUserLoading] = useState(false);
+
+  // Modal States
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [formData, setFormData] = useState({ name: "", phone: "", email: "", password: "", role: "Customer", balance: 0 });
+  
+  // Search
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -133,9 +144,11 @@ export default function AdminPage() {
         body: JSON.stringify({ ...slot, status: newStatus }),
       });
       if (!res.ok) throw new Error();
-      window.location.reload();
+      toast.success("Parking status updated");
+      const data = await (await fetch(`${BACKEND_URL}/parking-lots/`)).json();
+      setParkingSlots(data);
     } catch (err) {
-      alert("Failed to update parking status");
+      toast.error("Failed to update parking status");
     }
   };
 
@@ -146,10 +159,65 @@ export default function AdminPage() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error();
-      window.location.reload();
+      toast.success("User deleted successfully");
+      setUsers(users.filter(u => u.id !== user_id));
     } catch (err) {
-      alert("Failed to delete user");
+      toast.error("Failed to delete user");
     }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${BACKEND_URL}/users/admin-create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Failed to create user");
+      }
+      toast.success("User created successfully");
+      setShowCreateModal(false);
+      const data = await (await fetch(`${BACKEND_URL}/users/`)).json();
+      setUsers(data);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    try {
+      const { password, ...updateData } = formData;
+      const res = await fetch(`${BACKEND_URL}/users/${editingUser.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(password ? formData : updateData),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || "Failed to update user");
+      }
+      toast.success("User updated successfully");
+      setShowEditModal(false);
+      const data = await (await fetch(`${BACKEND_URL}/users/`)).json();
+      setUsers(data);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const openCreateModal = () => {
+    setFormData({ name: "", phone: "", email: "", password: "", role: "Customer", balance: 0 });
+    setShowCreateModal(true);
+  };
+
+  const openEditModal = (user) => {
+    setEditingUser(user);
+    setFormData({ name: user.name, phone: user.phone, email: user.email, password: "", role: user.role, balance: user.balance });
+    setShowEditModal(true);
   };
 
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total_price, 0);
@@ -162,29 +230,70 @@ export default function AdminPage() {
     .reduce((sum, inv) => sum + inv.total_price, 0);
 
   if (!currentUser)
-    return <p className="text-center mt-12">Loading admin information...</p>;
+    return <p className="text-center mt-12 text-gray-500 animate-pulse">Loading admin dashboard...</p>;
+
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.phone.includes(searchQuery)
+  );
 
   return (
-    <main className="min-h-screen bg-gray-50 px-6 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Button variant="destructive" onClick={handleLogout}>
-          <LogOut className="w-4 h-4 mr-1" /> Logout
-        </Button>
-      </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar user={currentUser} title="Admin Dashboard" />
+      
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-      <Card className="mb-8 rounded-2xl shadow-md">
-        <CardContent className="space-y-2">
-          <h2 className="text-xl font-bold">Admin Information</h2>
-          <p>
-            <User className="inline w-4 h-4 mr-1" /> {currentUser.name}
-          </p>
-          <p>Email: {currentUser.email}</p>
-          <p>Phone: {currentUser.phone}</p>
-          <p>Role: {currentUser.role}</p>
-          <p>Balance: {currentUser.balance?.toLocaleString()}₫</p>
-        </CardContent>
-      </Card>
+      {/* Dashboard Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="rounded-2xl shadow-sm border-t-4 border-blue-500">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-100 rounded-full text-blue-600"><Users className="w-6 h-6" /></div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Users</p>
+                <p className="text-2xl font-bold">{users.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="rounded-2xl shadow-sm border-t-4 border-green-500">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-green-100 rounded-full text-green-600"><Car className="w-6 h-6" /></div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Available Slots</p>
+                <p className="text-2xl font-bold">{parkingSlots.filter(s => s.status === 'available').length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm border-t-4 border-yellow-500">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-yellow-100 rounded-full text-yellow-600"><BarChart3 className="w-6 h-6" /></div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Today's Revenue</p>
+                <p className="text-2xl font-bold">{todayRevenue.toLocaleString()}₫</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl shadow-sm border-t-4 border-purple-500">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 rounded-full text-purple-600"><Wallet className="w-6 h-6" /></div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Revenue</p>
+                <p className="text-2xl font-bold">{totalRevenue.toLocaleString()}₫</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <h2 className="text-2xl font-bold mb-4">Parking Status</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
@@ -217,28 +326,7 @@ export default function AdminPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <Card className="rounded-2xl shadow-md">
-          <CardContent className="space-y-2">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" /> Total Revenue
-            </div>
-            <p className="text-3xl font-bold text-green-600">
-              {totalRevenue.toLocaleString()}₫
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl shadow-md">
-          <CardContent className="space-y-2">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" /> Today's Revenue
-            </div>
-            <p className="text-3xl font-bold text-blue-600">
-              {todayRevenue.toLocaleString()}₫
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+
 
       <h2 className="text-2xl font-bold mb-4">Invoices</h2>
       {invoiceLoading ? (
@@ -288,47 +376,164 @@ export default function AdminPage() {
         </div>
       )}
 
-      <h2 className="text-2xl font-bold mb-4">Users List</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 mt-8">
+        <h2 className="text-2xl font-bold">Users Management</h2>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <input 
+              type="text" 
+              placeholder="Search users..." 
+              className="w-full border rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button onClick={openCreateModal} className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
+            <Plus className="w-4 h-4 mr-1" /> Add User
+          </Button>
+        </div>
+      </div>
       {userLoading ? (
         <p>Loading users...</p>
       ) : (
-        <div className="overflow-x-auto mb-8">
-          <table className="w-full table-auto border border-gray-200">
-            <thead className="bg-gray-100">
+        <div className="overflow-x-auto mb-8 bg-white rounded-xl shadow-sm border border-gray-200">
+          <table className="w-full table-auto">
+            <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-sm">
               <tr>
-                <th className="p-2 border">ID</th>
-                <th className="p-2 border">Name</th>
-                <th className="p-2 border">Email</th>
-                <th className="p-2 border">Phone</th>
-                <th className="p-2 border">Role</th>
-                <th className="p-2 border">Balance</th>
-                <th className="p-2 border">Actions</th>
+                <th className="p-3 text-left font-medium">Name & Email</th>
+                <th className="p-3 text-left font-medium">Phone</th>
+                <th className="p-3 text-center font-medium">Role</th>
+                <th className="p-3 text-right font-medium">Balance</th>
+                <th className="p-3 text-center font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="text-center border-t">
-                  <td className="p-2 border">{u.id}</td>
-                  <td className="p-2 border">{u.name}</td>
-                  <td className="p-2 border">{u.email}</td>
-                  <td className="p-2 border">{u.phone}</td>
-                  <td className="p-2 border">{u.role}</td>
-                  <td className="p-2 border">{u.balance?.toLocaleString()}₫</td>
-                  <td className="p-2 border">
+            <tbody className="divide-y divide-gray-100">
+              {filteredUsers.map((u) => (
+                <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="p-3 text-left">
+                    <div className="font-medium text-gray-900">{u.name}</div>
+                    <div className="text-xs text-gray-500">{u.email}</div>
+                  </td>
+                  <td className="p-3 text-left text-gray-600">{u.phone}</td>
+                  <td className="p-3 text-center">
+                    <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${u.role === 'Admin' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right font-medium text-green-600">{u.balance?.toLocaleString()}₫</td>
+                  <td className="p-3 text-center space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openEditModal(u)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={() => deleteUser(u.id)}
                     >
-                      <X className="w-4 h-4 mr-1" /> Delete
+                      <X className="w-4 h-4" />
                     </Button>
                   </td>
                 </tr>
               ))}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-500">No users found.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       )}
-    </main>
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Create New User</h2>
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input required className="w-full border p-2 rounded" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone</label>
+                <input required className="w-full border p-2 rounded" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input type="email" required className="w-full border p-2 rounded" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Password</label>
+                <input type="password" required className="w-full border p-2 rounded" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Role</label>
+                <select className="w-full border p-2 rounded" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                  <option value="Customer">Customer</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Balance</label>
+                <input type="number" className="w-full border p-2 rounded" value={formData.balance} onChange={e => setFormData({...formData, balance: Number(e.target.value)})} />
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+                <Button type="submit">Create</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Edit User</h2>
+            <form onSubmit={handleUpdateUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input required className="w-full border p-2 rounded" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone</label>
+                <input required className="w-full border p-2 rounded" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input type="email" required className="w-full border p-2 rounded" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Password (Leave blank to keep)</label>
+                <input type="password" className="w-full border p-2 rounded" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Role</label>
+                <select className="w-full border p-2 rounded" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                  <option value="Customer">Customer</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Balance</label>
+                <input type="number" className="w-full border p-2 rounded" value={formData.balance} onChange={e => setFormData({...formData, balance: Number(e.target.value)})} />
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
+                <Button type="submit">Update</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      </main>
+    </div>
   );
 }

@@ -47,7 +47,12 @@ export default function Page() {
           </p>
         </div>
 
-        <div className="flex gap-3 mt-4 md:mt-0">
+        <div className="flex flex-wrap gap-3 mt-4 md:mt-0 justify-center sm:justify-start">
+          <Link href="/simulator">
+            <Button className="bg-purple-600 text-white font-semibold px-6 py-2 rounded-full shadow hover:bg-purple-700 hover:scale-105 transition-transform">
+              Simulator
+            </Button>
+          </Link>
           <Link href="/signup">
             <Button className="bg-linear-to-r from-green-400 to-blue-500 text-white font-semibold px-6 py-2 rounded-full shadow-lg hover:scale-105 transition-transform">
               Sign Up

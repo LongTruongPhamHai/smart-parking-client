@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 💻 Phân hệ Frontend (Smart Parking Client)
 
-## Getting Started
+> **Dự án:** Hệ thống quản lý bãi đỗ xe thông minh (Đại học Thuỷ Lợi)  
+> **Vai trò:** Giao diện tương tác người dùng (Web Client).
 
-First, run the development server:
+---
 
+## 🛠 Công nghệ sử dụng
+
+- **Core:** Next.js (App Router), React 19.
+- **Styling:** TailwindCSS.
+- **Components & Icons:** Lucide-React, React Hot Toast (Thông báo nổi).
+- **Animations:** Framer Motion (hiệu ứng di chuyển mượt mà tại trang chủ).
+
+---
+
+## 📂 Các trang tính năng chính (Pages)
+
+1. `src/app/page.js`: **Trang chủ** - Hiển thị trạng thái các bãi đỗ xe theo thời gian thực (Trống/Đã có xe). Có điều hướng đến các trang chức năng.
+2. `src/app/admin`: **Admin Dashboard** - Trang dành cho Quản trị viên quản lý danh sách Bãi đỗ xe, tạo mới và chỉnh sửa User, theo dõi bảng doanh thu (Invoices).
+3. `src/app/customer`: **Customer Dashboard** - Trang dành cho Khách hàng xem thông tin cá nhân, chỉnh sửa mật khẩu, nạp tiền vào thẻ và xem lịch sử gửi xe.
+4. `src/app/simulator`: **Simulator (Mô phỏng IoT)** - Giao diện để mô phỏng hành vi quẹt thẻ từ của xe vào (Check-in) và xe ra (Check-out) thay cho thiết bị phần cứng thật.
+
+---
+
+## 🚀 Hướng dẫn cài đặt và khởi chạy
+
+**Bước 1: Cài đặt Dependencies**  
+Yêu cầu hệ thống đã cài đặt [Node.js](https://nodejs.org/). Mở terminal tại thư mục này và chạy:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Bước 2: Cấu hình biến môi trường (Optional)**  
+Nếu Backend Server của bạn không chạy tại `http://127.0.0.1:8000`, hãy tạo một file `.env.local` ở thư mục hiện tại và thêm dòng sau:
+```env
+NEXT_PUBLIC_BACKEND_URL=http://<IP_cua_ban>:<PORT>
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Bước 3: Khởi động Client**  
+Chạy lệnh sau để khởi động môi trường dev:
+```bash
+npm run dev
+```
+Mở trình duyệt và truy cập: `http://localhost:3000` để sử dụng hệ thống!
