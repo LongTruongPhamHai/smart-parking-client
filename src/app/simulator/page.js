@@ -6,10 +6,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-hot-toast";
-import { LogIn, LogOut, Car, ArrowLeft, Flame, AlertTriangle } from "lucide-react";
+import {
+  LogIn,
+  LogOut,
+  Car,
+  ArrowLeft,
+  Flame,
+  AlertTriangle,
+  Radio,
+  CheckCircle2,
+  XCircle,
+  Phone,
+  Lock,
+  Cpu,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function SimulatorPage() {
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
 
   const [checkInPhone, setCheckInPhone] = useState("");
   const [checkInPassword, setCheckInPassword] = useState("");
@@ -33,7 +48,7 @@ export default function SimulatorPage() {
       const res = await fetch(`${BACKEND_URL}/parking-lots/`);
       if (res.ok) {
         const data = await res.json();
-        setAvailableLots(data.filter(lot => lot.status === "available"));
+        setAvailableLots(data.filter((lot) => lot.status === "available"));
       }
     } catch (err) {
       console.error("Failed to fetch parking lots", err);
@@ -55,7 +70,7 @@ export default function SimulatorPage() {
       if (checkInLotId) {
         bodyData.parking_lot_id = checkInLotId;
       }
-      
+
       const res = await fetch(`${BACKEND_URL}/users/check-in`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,7 +82,7 @@ export default function SimulatorPage() {
       }
       setCheckInResult(data);
       toast.success(data.message || "Check-in successful");
-      fetchParkingLots(); // Refresh available lots
+      fetchParkingLots();
     } catch (err) {
       setCheckInError(err.message);
       toast.error(err.message);
@@ -86,7 +101,10 @@ export default function SimulatorPage() {
       const res = await fetch(`${BACKEND_URL}/users/check-out`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: checkOutPhone, password: checkOutPassword }),
+        body: JSON.stringify({
+          phone: checkOutPhone,
+          password: checkOutPassword,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -94,7 +112,7 @@ export default function SimulatorPage() {
       }
       setCheckOutResult(data);
       toast.success(data.message || "Check-out successful");
-      fetchParkingLots(); // Refresh available lots
+      fetchParkingLots();
     } catch (err) {
       setCheckOutError(err.message);
       toast.error(err.message);
@@ -104,7 +122,11 @@ export default function SimulatorPage() {
   };
 
   const handleSendFireAlert = async () => {
-    if (!confirm("Xác nhận kích hoạt giả lập CẢNH BÁO CHÁY khẩn cấp? Mail sẽ được gửi tới tất cả người dùng.")) {
+    if (
+      !confirm(
+        "Are you sure you want to trigger the EMERGENCY FIRE ALERT? Email notifications will be sent to all users.",
+      )
+    ) {
       return;
     }
     setIsSendingFire(true);
@@ -114,9 +136,11 @@ export default function SimulatorPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.detail || "Gửi cảnh báo cháy thất bại");
+        throw new Error(
+          data.detail || "Failed to send fire alarm notification",
+        );
       }
-      toast.success("🔥 Cảnh báo cháy đã được kích hoạt thành công!");
+      toast.success("🔥 Fire Alarm broadcasted successfully!");
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -125,7 +149,11 @@ export default function SimulatorPage() {
   };
 
   const handleSendGasAlert = async () => {
-    if (!confirm("Xác nhận kích hoạt giả lập CẢNH BÁO RÒ RỈ GAS? Mail sẽ được gửi tới tất cả người dùng.")) {
+    if (
+      !confirm(
+        "Are you sure you want to trigger the GAS LEAK ALERT? Email notifications will be sent to all users.",
+      )
+    ) {
       return;
     }
     setIsSendingGas(true);
@@ -135,9 +163,9 @@ export default function SimulatorPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.detail || "Gửi cảnh báo khí GAS thất bại");
+        throw new Error(data.detail || "Failed to send gas leak notification");
       }
-      toast.success("⚠️ Cảnh báo khí GAS đã được kích hoạt thành công!");
+      toast.success("⚠️ Gas Leak Alert broadcasted successfully!");
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -146,161 +174,324 @@ export default function SimulatorPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 space-y-8">
-      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Check-In Simulator */}
-        <Card className="rounded-2xl shadow-xl border-t-4 border-blue-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              <LogIn className="text-blue-500" /> Simulate Check-In
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCheckIn} className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="ci-phone">Phone Number</Label>
-                <Input
-                  id="ci-phone"
-                  required
-                  placeholder="Enter user phone"
-                  value={checkInPhone}
-                  onChange={(e) => setCheckInPhone(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="ci-pw">Password</Label>
-                <Input
-                  id="ci-pw"
-                  type="password"
-                  required
-                  placeholder="Enter password"
-                  value={checkInPassword}
-                  onChange={(e) => setCheckInPassword(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="ci-lot">Parking Lot (Optional)</Label>
-                <select
-                  id="ci-lot"
-                  className="w-full flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={checkInLotId}
-                  onChange={(e) => setCheckInLotId(e.target.value)}
+    <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-8 font-sans relative overflow-hidden">
+      {/* Light Ambient Background Glow */}
+      <div className="absolute top-1/4 left-1/3 -translate-x-1/2 w-[500px] h-[500px] bg-blue-200/40 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] bg-emerald-200/40 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="max-w-5xl w-full space-y-8 relative z-10 my-12">
+        {/* Navigation & Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-100 text-blue-600 rounded-2xl">
+              <Cpu className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                IoT & Gate Simulator
+              </h1>
+              <p className="text-xs text-slate-500">
+                Simulate vehicle entry/exit barrier control & Fire Alarm sensors
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 px-4 py-2.5 rounded-xl transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Home
+          </Link>
+        </div>
+
+        {/* Gate Simulation Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Check-In Simulator */}
+          <Card className="rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-200/50 bg-white/90 backdrop-blur-xl overflow-hidden">
+            <CardHeader className="bg-slate-50/80 border-b border-slate-100 p-5">
+              <CardTitle className="flex items-center gap-2.5 text-lg font-bold text-slate-800">
+                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                  <LogIn className="w-5 h-5" />
+                </div>
+                Simulate Gate Check-In (Vehicle Entry)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <form onSubmit={handleCheckIn} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="ci-phone"
+                    className="text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Phone Number
+                  </Label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                    <Input
+                      id="ci-phone"
+                      required
+                      placeholder="Enter user phone number"
+                      value={checkInPhone}
+                      onChange={(e) => setCheckInPhone(e.target.value)}
+                      className="pl-10 bg-slate-50/50 border-slate-200 rounded-xl text-sm h-11 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="ci-pw"
+                    className="text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                    <Input
+                      id="ci-pw"
+                      type="password"
+                      required
+                      placeholder="Enter password"
+                      value={checkInPassword}
+                      onChange={(e) => setCheckInPassword(e.target.value)}
+                      className="pl-10 bg-slate-50/50 border-slate-200 rounded-xl text-sm h-11 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="ci-lot"
+                    className="text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Parking Slot
+                  </Label>
+                  <div className="relative">
+                    <Car className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 z-10" />
+                    <select
+                      id="ci-lot"
+                      className="pl-10 w-full flex h-11 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      value={checkInLotId}
+                      onChange={(e) => setCheckInLotId(e.target.value)}
+                    >
+                      <option value="">-- Auto Assign Slot --</option>
+                      {availableLots.map((lot) => (
+                        <option key={lot.id} value={lot.id}>
+                          {lot.name} (Available)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-600/20 transition-all mt-2"
+                  disabled={isCheckingIn}
                 >
-                  <option value="">-- Auto Assign --</option>
-                  {availableLots.map(lot => (
-                    <option key={lot.id} value={lot.id}>{lot.name} (Available)</option>
-                  ))}
-                </select>
+                  {isCheckingIn ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Triggering Gate...</span>
+                    </div>
+                  ) : (
+                    "Trigger Check-In"
+                  )}
+                </Button>
+
+                {checkInError && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-2xl text-xs font-medium flex items-start gap-2">
+                    <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{checkInError}</span>
+                  </div>
+                )}
+
+                {checkInResult && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs space-y-1.5">
+                    <div className="flex items-center gap-1.5 font-bold text-sm text-emerald-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>{checkInResult.message}</span>
+                    </div>
+                    <div className="pt-2 border-t border-emerald-200/60 text-slate-600 space-y-1">
+                      <p>
+                        <span className="font-semibold text-slate-800">
+                          Invoice ID:
+                        </span>{" "}
+                        #{checkInResult.invoice_id}
+                      </p>
+                      <p>
+                        <span className="font-semibold text-slate-800">
+                          Start Time:
+                        </span>{" "}
+                        {checkInResult.start_time}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Check-Out Simulator */}
+          <Card className="rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-200/50 bg-white/90 backdrop-blur-xl overflow-hidden">
+            <CardHeader className="bg-slate-50/80 border-b border-slate-100 p-5">
+              <CardTitle className="flex items-center gap-2.5 text-lg font-bold text-slate-800">
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <LogOut className="w-5 h-5" />
+                </div>
+                Simulate Gate Check-Out (Vehicle Exit)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <form onSubmit={handleCheckOut} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="co-phone"
+                    className="text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Phone Number
+                  </Label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                    <Input
+                      id="co-phone"
+                      required
+                      placeholder="Enter user phone number"
+                      value={checkOutPhone}
+                      onChange={(e) => setCheckOutPhone(e.target.value)}
+                      className="pl-10 bg-slate-50/50 border-slate-200 rounded-xl text-sm h-11 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="co-pw"
+                    className="text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                  >
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                    <Input
+                      id="co-pw"
+                      type="password"
+                      required
+                      placeholder="Enter password"
+                      value={checkOutPassword}
+                      onChange={(e) => setCheckOutPassword(e.target.value)}
+                      className="pl-10 bg-slate-50/50 border-slate-200 rounded-xl text-sm h-11 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md shadow-emerald-600/20 transition-all mt-2"
+                  disabled={isCheckingOut}
+                >
+                  {isCheckingOut ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Opening Gate...</span>
+                    </div>
+                  ) : (
+                    "Trigger Check-Out"
+                  )}
+                </Button>
+
+                {checkOutError && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-2xl text-xs font-medium flex items-start gap-2">
+                    <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{checkOutError}</span>
+                  </div>
+                )}
+
+                {checkOutResult && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs space-y-1.5">
+                    <div className="flex items-center gap-1.5 font-bold text-sm text-emerald-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>{checkOutResult.message}</span>
+                    </div>
+                    <div className="pt-2 border-t border-emerald-200/60 text-slate-600 space-y-1">
+                      <p>
+                        <span className="font-semibold text-slate-800">
+                          Invoice ID:
+                        </span>{" "}
+                        #{checkOutResult.invoice_id}
+                      </p>
+                      <p>
+                        <span className="font-semibold text-slate-800">
+                          Check-in:
+                        </span>{" "}
+                        {checkOutResult.start_time}
+                      </p>
+                      <p>
+                        <span className="font-semibold text-slate-800">
+                          Check-out:
+                        </span>{" "}
+                        {checkOutResult.end_time}
+                      </p>
+                      <p className="text-sm font-black text-emerald-700 pt-1">
+                        Total Paid:{" "}
+                        {checkOutResult.total_amount?.toLocaleString()}₫
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Emergency IoT Alert Simulator */}
+        <Card className="rounded-3xl border-2 border-rose-200 bg-rose-50/30 shadow-xl shadow-rose-100/50 overflow-hidden">
+          <CardHeader className="bg-rose-100/50 border-b border-rose-200/60 p-5">
+            <CardTitle className="flex items-center justify-between text-lg font-bold text-rose-800">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-rose-500 text-white rounded-xl shadow-xs animate-pulse">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                Simulate Emergency Signals (IoT Alarm System)
               </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={isCheckingIn}>
-                {isCheckingIn ? "Processing..." : "Trigger Check-In"}
-              </Button>
-
-              {checkInError && (
-                <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm mt-4">
-                  {checkInError}
-                </div>
-              )}
-              {checkInResult && (
-                <div className="p-3 bg-green-100 text-green-800 rounded-md text-sm mt-4">
-                  <p className="font-bold">✅ {checkInResult.message}</p>
-                  <p>Invoice ID: {checkInResult.invoice_id}</p>
-                  <p>Start Time: {checkInResult.start_time}</p>
-                </div>
-              )}
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Check-Out Simulator */}
-        <Card className="rounded-2xl shadow-xl border-t-4 border-green-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              <LogOut className="text-green-500" /> Simulate Check-Out
+              <span className="flex items-center gap-1.5 text-xs font-semibold bg-rose-200/80 text-rose-800 px-3 py-1 rounded-full">
+                <Radio className="w-3.5 h-3.5 animate-ping text-rose-600" />{" "}
+                Active Sensors
+              </span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCheckOut} className="space-y-4">
-              <div className="space-y-1">
-                <Label htmlFor="co-phone">Phone Number</Label>
-                <Input
-                  id="co-phone"
-                  required
-                  placeholder="Enter user phone"
-                  value={checkOutPhone}
-                  onChange={(e) => setCheckOutPhone(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="co-pw">Password</Label>
-                <Input
-                  id="co-pw"
-                  type="password"
-                  required
-                  placeholder="Enter password"
-                  value={checkOutPassword}
-                  onChange={(e) => setCheckOutPassword(e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={isCheckingOut}>
-                {isCheckingOut ? "Processing..." : "Trigger Check-Out"}
+
+          <CardContent className="p-6 space-y-4">
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              Trigger simulated emergency alarm signals from the parking lot's
+              IoT sensors. When activated, the system automatically sends urgent
+              notifications to <strong>all registered users</strong> via Email
+              Service.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <Button
+                onClick={handleSendFireAlert}
+                disabled={isSendingFire}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-14 text-sm rounded-2xl shadow-md shadow-rose-600/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
+              >
+                {isSendingFire
+                  ? "Sending Fire Alarm..."
+                  : "🔥 Simulate Fire Alarm"}
               </Button>
 
-              {checkOutError && (
-                <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm mt-4">
-                  {checkOutError}
-                </div>
-              )}
-              {checkOutResult && (
-                <div className="p-3 bg-green-100 text-green-800 rounded-md text-sm mt-4 space-y-1">
-                  <p className="font-bold">✅ {checkOutResult.message}</p>
-                  <p>Invoice ID: {checkOutResult.invoice_id}</p>
-                  <p>Start: {checkOutResult.start_time}</p>
-                  <p>End: {checkOutResult.end_time}</p>
-                  <p className="text-lg font-bold text-green-900 mt-2">
-                    Total: {checkOutResult.total_amount?.toLocaleString()}₫
-                  </p>
-                </div>
-              )}
-            </form>
+              <Button
+                onClick={handleSendGasAlert}
+                disabled={isSendingGas}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold h-14 text-sm rounded-2xl shadow-md shadow-amber-600/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
+              >
+                {isSendingGas
+                  ? "Sending Gas Alert..."
+                  : "⚠️ Simulate Gas Leak Alert"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Emergency IoT Alert Simulator */}
-      <Card className="max-w-4xl w-full rounded-2xl shadow-xl border-t-4 border-red-500 bg-white">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl text-red-600">
-            <AlertTriangle className="text-red-500" /> Mô phỏng Cảnh báo Khẩn cấp (Emergency Alerts)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Kích hoạt mô phỏng tín hiệu cảnh báo từ cảm biến IoT. Khi nhấn kích hoạt, hệ thống sẽ tự động gửi email cảnh báo tới <strong>tất cả người dùng</strong> có email trong hệ thống.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <Button
-              onClick={handleSendFireAlert}
-              disabled={isSendingFire}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-6 text-base rounded-xl shadow-md flex items-center justify-center gap-2"
-            >
-              {isSendingFire ? "Đang gửi cảnh báo cháy..." : "🔥 Giả lập Cảnh báo Cháy"}
-            </Button>
-
-            <Button
-              onClick={handleSendGasAlert}
-              disabled={isSendingGas}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-semibold py-6 text-base rounded-xl shadow-md flex items-center justify-center gap-2"
-            >
-              {isSendingGas ? "Đang gửi cảnh báo GAS..." : "⚠️ Giả lập Cảnh báo Khí GAS"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <a href="/" className="absolute top-6 left-6 text-gray-500 hover:text-gray-900 flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm transition-all hover:shadow">
-        <ArrowLeft className="w-5 h-5" /> Back to Home
-      </a>
     </main>
   );
 }

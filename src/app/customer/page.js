@@ -6,23 +6,36 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/ui/navbar";
 import { toast } from "react-hot-toast";
-import { Car, Wallet, User, LogOut, Edit, KeyRound, Plus, Receipt } from "lucide-react";
+import {
+  Car,
+  Wallet,
+  User,
+  Edit,
+  KeyRound,
+  Plus,
+  Receipt,
+  Phone,
+  Mail,
+  ShieldCheck,
+  Clock,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 function formatDurationFromHours(hoursFloat) {
+  if (!hoursFloat) return "Processing";
   const totalSeconds = Math.floor(hoursFloat * 3600);
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
   const pad = (n) => String(n).padStart(2, "0");
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  return `${pad(h)}h ${pad(m)}m ${pad(s)}s`;
 }
 
 function formatDateToGMT7(datetimeString) {
   if (!datetimeString) return "Processing";
   const date = new Date(datetimeString);
-
   const dateUTC7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
-
   const pad = (n) => String(n).padStart(2, "0");
 
   const y = dateUTC7.getFullYear();
@@ -30,9 +43,8 @@ function formatDateToGMT7(datetimeString) {
   const d = pad(dateUTC7.getDate());
   const h = pad(dateUTC7.getHours());
   const min = pad(dateUTC7.getMinutes());
-  const s = pad(dateUTC7.getSeconds());
 
-  return `${d}/${m}/${y} ${h}:${min}:${s}`;
+  return `${d}/${m}/${y} ${h}:${min}`;
 }
 
 export default function CustomerPage() {
@@ -42,7 +54,6 @@ export default function CustomerPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [parkingSlots, setParkingSlots] = useState([]);
   const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
 
   const [showDeposit, setShowDeposit] = useState(false);
@@ -52,13 +63,19 @@ export default function CustomerPage() {
   // Profile Edit States
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [profileData, setProfileData] = useState({ name: "", phone: "", email: "" });
-  const [passwordData, setPasswordData] = useState({ old_password: "", new_password: "" });
+  const [profileData, setProfileData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+  });
+  const [passwordData, setPasswordData] = useState({
+    old_password: "",
+    new_password: "",
+  });
 
   const fetchUser = useCallback(async () => {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) return;
-
     const { id } = JSON.parse(storedUser);
 
     try {
@@ -79,14 +96,11 @@ export default function CustomerPage() {
       setParkingSlots(data);
     } catch (err) {
       console.error("Failed to load parking slots", err);
-    } finally {
-      setLoading(false);
     }
   }, [BACKEND_URL]);
 
   const fetchInvoices = useCallback(async () => {
     if (!currentUser) return;
-
     setInvoiceLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/invoices/user/${currentUser.id}`);
@@ -109,11 +123,6 @@ export default function CustomerPage() {
     fetchInvoices();
   }, [fetchInvoices]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    window.location.href = "/";
-  };
-
   const handleDeposit = async () => {
     if (
       !depositAmount ||
@@ -128,7 +137,7 @@ export default function CustomerPage() {
     try {
       const res = await fetch(
         `${BACKEND_URL}/users/${currentUser.id}/add-balance?amount=${depositAmount}`,
-        { method: "POST", headers: { "Content-Type": "application/json" } }
+        { method: "POST", headers: { "Content-Type": "application/json" } },
       );
       if (!res.ok) throw new Error("Deposit failed");
 
@@ -165,11 +174,14 @@ export default function CustomerPage() {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${BACKEND_URL}/users/${currentUser.id}/change-password`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(passwordData),
-      });
+      const res = await fetch(
+        `${BACKEND_URL}/users/${currentUser.id}/change-password`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(passwordData),
+        },
+      );
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.detail || "Failed to change password");
@@ -183,178 +195,465 @@ export default function CustomerPage() {
   };
 
   const openEditProfile = () => {
-    setProfileData({ name: currentUser.name, phone: currentUser.phone, email: currentUser.email });
+    setProfileData({
+      name: currentUser.name,
+      phone: currentUser.phone,
+      email: currentUser.email,
+    });
     setShowEditProfile(true);
   };
 
   if (!currentUser)
-    return <p className="text-center mt-12 text-gray-500 animate-pulse">Loading dashboard...</p>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-slate-600 font-medium animate-pulse">
+          Loading Customer Portal...
+        </p>
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50/50 flex flex-col font-sans">
       <Navbar user={currentUser} title="Customer Dashboard" />
-      
+
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
-        {/* Top Info Section */}
+        {/* Banner Welcome */}
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-8 rounded-3xl text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-indigo-400 font-semibold text-xs tracking-wider uppercase mb-1">
+              <Sparkles className="w-4 h-4" /> Welcome Back
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black">
+              {currentUser.name}
+            </h1>
+            <p className="text-slate-300 text-sm mt-1">
+              Manage your parking reservations and digital wallet seamlessly.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10">
+            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+            <span className="text-xs font-medium">
+              Verified Customer Account
+            </span>
+          </div>
+        </div>
+
+        {/* Profile & Wallet Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* User Profile Card */}
-          <Card className="rounded-2xl shadow-sm border-t-4 border-blue-500 lg:col-span-2">
+          <Card className="rounded-3xl border-none shadow-sm bg-white lg:col-span-2 overflow-hidden">
             <CardContent className="p-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                <div className="space-y-3">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <User className="w-5 h-5 text-blue-500" /> My Profile
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-gray-600">
-                    <p><span className="font-medium text-gray-900">Name:</span> {currentUser.name}</p>
-                    <p><span className="font-medium text-gray-900">Phone:</span> {currentUser.phone}</p>
-                    <p><span className="font-medium text-gray-900">Email:</span> {currentUser.email}</p>
-                    <p><span className="font-medium text-gray-900">Role:</span> {currentUser.role}</p>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                    <User className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-800">
+                      Personal Info
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Account settings and details
+                    </p>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2 w-full sm:w-auto">
-                  <Button size="sm" variant="outline" onClick={openEditProfile} className="w-full">
-                    <Edit className="w-4 h-4 mr-2" /> Edit Profile
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={openEditProfile}
+                    className="rounded-xl text-xs font-semibold"
+                  >
+                    <Edit className="w-3.5 h-3.5 mr-1.5" /> Edit Profile
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setShowChangePassword(true)} className="w-full">
-                    <KeyRound className="w-4 h-4 mr-2" /> Change Password
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowChangePassword(true)}
+                    className="rounded-xl text-xs font-semibold"
+                  >
+                    <KeyRound className="w-3.5 h-3.5 mr-1.5" /> Password
                   </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100">
+                  <span className="text-xs font-medium text-slate-400 block mb-0.5">
+                    Full Name
+                  </span>
+                  <span className="font-semibold text-slate-800">
+                    {currentUser.name}
+                  </span>
+                </div>
+                <div className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100">
+                  <span className="text-xs font-medium text-slate-400 block mb-0.5">
+                    Phone Number
+                  </span>
+                  <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-slate-400" />{" "}
+                    {currentUser.phone}
+                  </span>
+                </div>
+                <div className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100">
+                  <span className="text-xs font-medium text-slate-400 block mb-0.5">
+                    Email Address
+                  </span>
+                  <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-slate-400" />{" "}
+                    {currentUser.email}
+                  </span>
+                </div>
+                <div className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-100">
+                  <span className="text-xs font-medium text-slate-400 block mb-0.5">
+                    Role
+                  </span>
+                  <span className="inline-block text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                    {currentUser.role}
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Balance Card */}
-          <Card className="rounded-2xl shadow-sm border-t-4 border-green-500 bg-linear-to-br from-green-50 to-white">
+          <Card className="rounded-3xl border-none shadow-sm bg-gradient-to-br from-emerald-500 to-teal-700 text-white overflow-hidden flex flex-col justify-between">
             <CardContent className="p-6 flex flex-col justify-between h-full">
               <div>
-                <h2 className="text-sm font-medium text-gray-500 flex items-center gap-2 mb-2">
-                  <Wallet className="w-4 h-4 text-green-600" /> Available Balance
-                </h2>
-                <p className="text-3xl font-bold text-gray-900 mb-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl">
+                    <Wallet className="w-6 h-6 text-emerald-100" />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full text-emerald-100">
+                    Smart Wallet
+                  </span>
+                </div>
+                <p className="text-xs font-medium text-emerald-100">
+                  Available Balance
+                </p>
+                <p className="text-4xl font-black mt-1">
                   {currentUser.balance?.toLocaleString()}₫
                 </p>
               </div>
-              <Button onClick={() => setShowDeposit(true)} className="w-full bg-green-600 hover:bg-green-700 text-white shadow-md transition-all hover:-translate-y-0.5">
-                <Plus className="w-4 h-4 mr-2" /> Top Up Balance
+
+              <Button
+                onClick={() => setShowDeposit(true)}
+                className="w-full mt-6 bg-white text-emerald-800 hover:bg-emerald-50 font-bold rounded-2xl shadow-lg transition-all"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Top Up Wallet
               </Button>
             </CardContent>
           </Card>
         </div>
 
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Parking Slot Status</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {parkingSlots.map((slot) => (
-            <Card key={slot.id} className={`rounded-xl shadow-sm border-b-4 transition-all hover:shadow-md ${slot.status === 'available' ? 'border-green-500' : 'border-red-500'}`}>
-              <CardContent className="p-4 flex flex-col items-center gap-3">
-                <Car className={`w-8 h-8 ${slot.status === "available" ? "text-green-500" : "text-red-500"}`} />
-                <p className="font-bold text-gray-800 text-center">{slot.name}</p>
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${slot.status === "available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                  {slot.status === "available" ? "Free" : "Occupied"}
-                </span>
+        {/* Parking Slots Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <Car className="w-5 h-5 text-blue-600" /> Live Parking Lot Status
+            </h2>
+            <span className="text-xs text-slate-500 font-medium">
+              Real-time availability
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {parkingSlots.map((slot) => {
+              const isAvailable = slot.status === "available";
+              return (
+                <Card
+                  key={slot.id}
+                  className={`rounded-2xl border-2 transition-all hover:shadow-md ${
+                    isAvailable
+                      ? "border-emerald-200 bg-emerald-50/30"
+                      : "border-rose-200 bg-rose-50/30"
+                  }`}
+                >
+                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                    <div
+                      className={`p-3 rounded-full ${isAvailable ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"}`}
+                    >
+                      <Car className="w-6 h-6" />
+                    </div>
+                    <p className="font-bold text-slate-800 text-sm">
+                      {slot.name}
+                    </p>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        isAvailable
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-rose-100 text-rose-700"
+                      }`}
+                    >
+                      {isAvailable ? "Available" : "Occupied"}
+                    </span>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* My Invoices Section */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <Receipt className="w-5 h-5 text-slate-700" /> My Parking History
+          </h2>
+
+          {invoiceLoading ? (
+            <p className="text-slate-500 animate-pulse text-sm">
+              Loading invoices...
+            </p>
+          ) : invoices.length === 0 ? (
+            <Card className="rounded-3xl border-dashed border-2 border-slate-200 bg-white">
+              <CardContent className="p-12 text-center text-slate-400">
+                <Receipt className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <p className="font-medium text-sm">
+                  No parking invoices recorded yet.
+                </p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-white">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-600">
+                  <thead className="bg-slate-50 text-slate-400 font-semibold uppercase text-xs">
+                    <tr>
+                      <th className="p-4">Invoice ID</th>
+                      <th className="p-4">Check-in</th>
+                      <th className="p-4">Check-out</th>
+                      <th className="p-4 text-center">Duration</th>
+                      <th className="p-4 text-right">Total Price</th>
+                      <th className="p-4 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {invoices.map((inv) => (
+                      <tr
+                        key={inv.id}
+                        className="hover:bg-slate-50/80 transition-colors"
+                      >
+                        <td className="p-4 font-bold text-slate-900">
+                          #{inv.id.slice(-6)}
+                        </td>
+                        <td className="p-4 text-slate-600">
+                          {formatDateToGMT7(inv.start_time)}
+                        </td>
+                        <td className="p-4 text-slate-600">
+                          {inv.end_time
+                            ? formatDateToGMT7(inv.end_time)
+                            : "Parked"}
+                        </td>
+                        <td className="p-4 text-center text-slate-600">
+                          {inv.duration
+                            ? formatDurationFromHours(inv.duration)
+                            : "—"}
+                        </td>
+                        <td className="p-4 text-right font-bold text-slate-900">
+                          {inv.total_price
+                            ? `${inv.total_price.toLocaleString()}₫`
+                            : "Calculating"}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span
+                            className={`px-2.5 py-1 text-xs rounded-full font-semibold ${
+                              inv.status === "completed"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-blue-100 text-blue-700"
+                            }`}
+                          >
+                            {inv.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
         </div>
-      </div>
 
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Receipt className="w-6 h-6 text-gray-700" /> My Invoices
-        </h2>
-        {invoiceLoading ? (
-          <p className="text-gray-500 animate-pulse">Loading invoices...</p>
-        ) : invoices.length === 0 ? (
-          <Card className="rounded-2xl border-dashed">
-            <CardContent className="p-12 text-center text-gray-500">
-              <Receipt className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>No invoices yet!</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
-            <table className="w-full table-auto text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200 text-gray-500">
-                <tr>
-                  <th className="p-3 text-left font-medium">Invoice ID</th>
-                  <th className="p-3 text-left font-medium">Start Time</th>
-                  <th className="p-3 text-left font-medium">End Time</th>
-                  <th className="p-3 text-center font-medium">Duration</th>
-                  <th className="p-3 text-right font-medium">Total</th>
-                  <th className="p-3 text-center font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-3 text-left font-mono text-xs text-gray-500">{inv.id.slice(-6)}</td>
-                    <td className="p-3 text-left">{formatDateToGMT7(inv.start_time)}</td>
-                    <td className="p-3 text-left text-gray-600">
-                      {inv.end_time ? formatDateToGMT7(inv.end_time) : "—"}
-                    </td>
-                    <td className="p-3 text-center text-gray-600">
-                      {inv.duration ? formatDurationFromHours(inv.duration) : "—"}
-                    </td>
-                    <td className="p-3 text-right font-medium text-gray-900">
-                      {inv.total_price ? `${inv.total_price.toLocaleString()}₫` : "Processing"}
-                    </td>
-                    <td className="p-3 text-center">
-                      <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${
-                        inv.status === 'Active' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {inv.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Deposit Modal */}
-      {showDeposit && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm">
-            <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-green-600" /> Top Up Balance
-            </h2>
-            <p className="text-sm text-gray-500 mb-6">Enter the amount you wish to deposit to your wallet.</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Amount (VND)</label>
-                <Input
-                  type="number"
-                  placeholder="e.g. 50000"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-full text-lg font-medium"
-                  autoFocus
-                />
+        {/* Deposit Modal */}
+        {showDeposit && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+            <div className="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm animate-in fade-in zoom-in duration-150">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold flex items-center gap-2 text-slate-800">
+                  <Wallet className="w-5 h-5 text-emerald-600" /> Top Up Wallet
+                </h2>
+                <button
+                  onClick={() => setShowDeposit(false)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              
-              <div className="grid grid-cols-3 gap-2">
-                {[20000, 50000, 100000].map(amt => (
-                  <Button key={amt} type="button" variant="outline" size="sm" onClick={() => setDepositAmount(amt)} className="text-xs">
-                    +{amt/1000}k
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">
+                    Enter Amount (VND)
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 50000"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    className="w-full text-lg font-bold rounded-xl"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {[20000, 50000, 100000, 200000].map((amt) => (
+                    <Button
+                      key={amt}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDepositAmount(amt)}
+                      className="text-xs font-semibold rounded-xl border-slate-200 hover:bg-emerald-50 hover:text-emerald-700"
+                    >
+                      +{amt / 1000}k
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => setShowDeposit(false)}
+                  >
+                    Cancel
                   </Button>
-                ))}
-              </div>
-
-              <div className="flex justify-end gap-3 mt-6">
-                <Button type="button" variant="outline" onClick={() => setShowDeposit(false)}>Cancel</Button>
-                <Button onClick={handleDeposit} disabled={isDepositing} className="bg-green-600 hover:bg-green-700 text-white">
-                  {isDepositing ? "Processing..." : "Confirm"}
-                </Button>
+                  <Button
+                    onClick={handleDeposit}
+                    disabled={isDepositing}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
+                  >
+                    {isDepositing ? "Processing..." : "Confirm Top Up"}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Edit Profile Modal */}
+        {showEditProfile && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+            <div className="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-150">
+              <h2 className="text-lg font-bold mb-4 text-slate-800">
+                Edit Profile
+              </h2>
+              <form onSubmit={handleUpdateProfile} className="space-y-3">
+                <input
+                  required
+                  placeholder="Name"
+                  className="w-full border rounded-xl p-2.5 text-sm"
+                  value={profileData.name}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, name: e.target.value })
+                  }
+                />
+                <input
+                  required
+                  placeholder="Phone"
+                  className="w-full border rounded-xl p-2.5 text-sm"
+                  value={profileData.phone}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, phone: e.target.value })
+                  }
+                />
+                <input
+                  type="email"
+                  required
+                  placeholder="Email"
+                  className="w-full border rounded-xl p-2.5 text-sm"
+                  value={profileData.email}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, email: e.target.value })
+                  }
+                />
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => setShowEditProfile(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="rounded-xl bg-blue-600 text-white"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Change Password Modal */}
+        {showChangePassword && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+            <div className="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in duration-150">
+              <h2 className="text-lg font-bold mb-4 text-slate-800">
+                Change Password
+              </h2>
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                <input
+                  type="password"
+                  required
+                  placeholder="Old Password"
+                  className="w-full border rounded-xl p-2.5 text-sm"
+                  value={passwordData.old_password}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      old_password: e.target.value,
+                    })
+                  }
+                />
+                <input
+                  type="password"
+                  required
+                  placeholder="New Password"
+                  className="w-full border rounded-xl p-2.5 text-sm"
+                  value={passwordData.new_password}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      new_password: e.target.value,
+                    })
+                  }
+                />
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => setShowChangePassword(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="rounded-xl bg-blue-600 text-white"
+                  >
+                    Update Password
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
