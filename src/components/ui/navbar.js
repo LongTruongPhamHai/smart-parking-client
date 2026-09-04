@@ -39,3 +39,4 @@ export function Navbar({ user, title }) {
     </header>
   );
 }
+

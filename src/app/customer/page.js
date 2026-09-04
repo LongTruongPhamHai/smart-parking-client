@@ -73,6 +73,11 @@ export default function CustomerPage() {
     new_password: "",
   });
 
+  // Pagination and sorting for invoices
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("desc"); // desc = newest first
+  const itemsPerPage = 5;
+
   const fetchUser = useCallback(async () => {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) return;
@@ -122,6 +127,52 @@ export default function CustomerPage() {
   useEffect(() => {
     fetchInvoices();
   }, [fetchInvoices]);
+
+  // Pagination and sorting helpers
+  const sortedInvoices = [...invoices].sort((a, b) => {
+    const timeA = new Date(a.start_time).getTime();
+    const timeB = new Date(b.start_time).getTime();
+    return sortOrder === "desc" ? timeB - timeA : timeA - timeB;
+  });
+
+  const paginate = (array, page) => {
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return array.slice(start, end);
+  };
+
+  const totalPages = Math.ceil(sortedInvoices.length / itemsPerPage);
+
+  const handleSortToggle = () => {
+    setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+    setInvoicePage(1); // Reset to page 1 when sorting changes
+  };
+
+  const PaginationControls = () => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-center gap-2 p-4 border-t border-slate-200">
+        <Button
+          onClick={() => setInvoicePage(Math.max(1, invoicePage - 1))}
+          disabled={invoicePage === 1}
+          className="px-3 py-1 text-sm disabled:opacity-50"
+        >
+          Previous
+        </Button>
+        <span className="text-sm text-slate-600">
+          Page {invoicePage} of {totalPages}
+        </span>
+        <Button
+          onClick={() => setInvoicePage(Math.min(totalPages, invoicePage + 1))}
+          disabled={invoicePage === totalPages}
+          className="px-3 py-1 text-sm disabled:opacity-50"
+        >
+          Next
+        </Button>
+      </div>
+    );
+  };
 
   const handleDeposit = async () => {
     if (
@@ -351,10 +402,10 @@ export default function CustomerPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <Car className="w-5 h-5 text-blue-600" /> Live Parking Lot Status
+              <Car className="w-5 h-5 text-blue-600" /> Parking Lot Status
             </h2>
             <span className="text-xs text-slate-500 font-medium">
-              Real-time availability
+              Current availability
             </span>
           </div>
 
@@ -416,6 +467,19 @@ export default function CustomerPage() {
             </Card>
           ) : (
             <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-white">
+              <div className="flex items-center justify-between p-4 border-b border-slate-200">
+                <span className="text-sm text-slate-600">
+                  {sortedInvoices.length} invoice
+                  {sortedInvoices.length !== 1 ? "s" : ""}
+                </span>
+                <Button
+                  onClick={handleSortToggle}
+                  className="px-3 py-1 text-sm"
+                  variant="ghost"
+                >
+                  Sort: {sortOrder === "desc" ? "Newest First" : "Oldest First"}
+                </Button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-600">
                   <thead className="bg-slate-50 text-slate-400 font-semibold uppercase text-xs">
@@ -429,7 +493,7 @@ export default function CustomerPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {invoices.map((inv) => (
+                    {paginate(sortedInvoices, invoicePage).map((inv) => (
                       <tr
                         key={inv.id}
                         className="hover:bg-slate-50/80 transition-colors"
@@ -470,6 +534,7 @@ export default function CustomerPage() {
                     ))}
                   </tbody>
                 </table>
+                <PaginationControls />
               </div>
             </Card>
           )}

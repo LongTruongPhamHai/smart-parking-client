@@ -29,7 +29,7 @@ export default function Page() {
         const data = await res.json();
         setParkingSlots(data);
       } catch (err) {
-        setError("Failed to load real-time parking status");
+        setError("Failed to load parking status");
       } finally {
         setLoading(false);
       }
@@ -66,7 +66,7 @@ export default function Page() {
               Smart Parking
             </h1>
             <p className="text-slate-500 text-sm max-w-md">
-              Real-time parking lot occupancy monitoring powered by automated
+              Parking lot occupancy monitoring powered by automated
               barrier control.
             </p>
           </div>
@@ -98,7 +98,7 @@ export default function Page() {
           </div>
         </motion.header>
 
-        {/* Live Overview Stats */}
+        {/* Overview Stats */}
         {!loading && !error && (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -150,7 +150,7 @@ export default function Page() {
           </motion.div>
         )}
 
-        {/* Main Live Slots Grid Section */}
+        {/* Main Slots Grid Section */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -159,11 +159,11 @@ export default function Page() {
         >
           <div className="flex items-center justify-between border-b border-slate-200 pb-4">
             <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-              Live Slot Status
+              Slot Status
             </h2>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />{" "}
-              Live Sync
+              Auto Sync
             </span>
           </div>
 
@@ -211,9 +211,6 @@ export default function Page() {
                       <h3 className="text-lg font-bold text-slate-800">
                         {slot.name}
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Slot ID: #{slot.id}
-                      </p>
                     </div>
 
                     <span

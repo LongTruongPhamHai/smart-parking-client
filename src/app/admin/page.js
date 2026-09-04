@@ -15,6 +15,7 @@ import {
   Search,
   TrendingUp,
   FileText,
+  Activity,
 } from "lucide-react";
 
 function formatDurationFromHours(hoursFloat) {
@@ -50,10 +51,18 @@ export default function AdminPage() {
   const [parkingSlots, setParkingSlots] = useState([]);
   const [users, setUsers] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
 
   const [userLoading, setUserLoading] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [logLoading, setLogLoading] = useState(false);
+
+  // Pagination states
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [logPage, setLogPage] = useState(1);
+  const [userPage, setUserPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -69,6 +78,42 @@ export default function AdminPage() {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Pagination helpers
+  const paginate = (array, page) => {
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return array.slice(start, end);
+  };
+
+  const totalPages = (array) => Math.ceil(array.length / itemsPerPage);
+
+  const PaginationControls = ({ currentPage, setPage, total }) => {
+    const pages = totalPages(total);
+    if (pages <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-center gap-2 p-4 border-t border-slate-200">
+        <Button
+          onClick={() => setPage(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className="px-3 py-1 text-sm disabled:opacity-50"
+        >
+          Previous
+        </Button>
+        <span className="text-sm text-slate-600">
+          Page {currentPage} of {pages}
+        </span>
+        <Button
+          onClick={() => setPage(Math.min(pages, currentPage + 1))}
+          disabled={currentPage === pages}
+          className="px-3 py-1 text-sm disabled:opacity-50"
+        >
+          Next
+        </Button>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -126,7 +171,13 @@ export default function AdminPage() {
         const res = await fetch(`${BACKEND_URL}/invoices/`);
         if (!res.ok) throw new Error();
         const data = await res.json();
-        setInvoices(data);
+        // Sort newest first by start_time
+        const sorted = data.sort((a, b) => {
+          const timeA = new Date(a.start_time).getTime();
+          const timeB = new Date(b.start_time).getTime();
+          return timeB - timeA; // DESC: newest first
+        });
+        setInvoices(sorted);
       } catch (err) {
         console.error("Failed to load invoices", err);
       } finally {
@@ -134,6 +185,23 @@ export default function AdminPage() {
       }
     };
     fetchInvoices();
+  }, [BACKEND_URL]);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      setLogLoading(true);
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/notifications/`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setLogs(data.data || []);
+      } catch (err) {
+        console.error("Failed to load activity logs", err);
+      } finally {
+        setLogLoading(false);
+      }
+    };
+    fetchLogs();
   }, [BACKEND_URL]);
 
   const toggleParkingStatus = async (slot) => {
@@ -267,7 +335,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>{" "}
-              Live System
+              Active System
             </span>
           </div>
         </div>
@@ -345,6 +413,7 @@ export default function AdminPage() {
           {[
             { id: "overview", label: "Parking Overview", icon: Car },
             { id: "invoices", label: "Invoice History", icon: FileText },
+            { id: "logs", label: "Activity Logs", icon: Activity },
             { id: "users", label: "User Management", icon: Users },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -428,7 +497,7 @@ export default function AdminPage() {
                   <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-xs">
                     <tr>
                       <th className="p-4">Invoice ID</th>
-                      <th className="p-4">User ID</th>
+                      <th className="p-4">User Name</th>
                       <th className="p-4">Check-in</th>
                       <th className="p-4">Check-out</th>
                       <th className="p-4">Duration</th>
@@ -437,7 +506,7 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {invoices.map((inv) => (
+                    {paginate(invoices, invoicePage).map((inv) => (
                       <tr
                         key={inv.id}
                         className="hover:bg-slate-50/80 transition-colors"
@@ -445,7 +514,9 @@ export default function AdminPage() {
                         <td className="p-4 font-bold text-slate-900">
                           #{inv.id}
                         </td>
-                        <td className="p-4 font-medium">{inv.user_id}</td>
+                        <td className="p-4 font-medium">
+                          {inv.user_name || inv.user_id}
+                        </td>
                         <td className="p-4 text-slate-500">
                           {formatDateToGMT7(inv.start_time)}
                         </td>
@@ -475,12 +546,81 @@ export default function AdminPage() {
                     ))}
                   </tbody>
                 </table>
+                <PaginationControls
+                  currentPage={invoicePage}
+                  setPage={setInvoicePage}
+                  total={invoices}
+                />
               </div>
             )}
           </Card>
         )}
 
-        {/* Tab 3: Users Management */}
+        {/* Tab 3: Activity Logs */}
+        {activeTab === "logs" && (
+          <Card className="rounded-2xl border-none shadow-sm overflow-hidden bg-white">
+            {logLoading ? (
+              <div className="p-8 text-center text-slate-500">
+                Loading activity logs...
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 font-semibold uppercase text-xs">
+                    <tr>
+                      <th className="p-4">Time</th>
+                      <th className="p-4">Type</th>
+                      <th className="p-4">Title</th>
+                      <th className="p-4">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {paginate(logs, logPage).map((log) => {
+                      const typeColors = {
+                        info: "bg-blue-100 text-blue-700",
+                        success: "bg-emerald-100 text-emerald-700",
+                        warning: "bg-amber-100 text-amber-700",
+                        error: "bg-red-100 text-red-700",
+                        fire: "bg-orange-100 text-orange-700",
+                        gas: "bg-purple-100 text-purple-700",
+                      };
+                      return (
+                        <tr
+                          key={log._id}
+                          className="hover:bg-slate-50/80 transition-colors"
+                        >
+                          <td className="p-4 text-slate-500">
+                            {formatDateToGMT7(log.created_at)}
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-xs font-semibold ${typeColors[log.type] || typeColors.info}`}
+                            >
+                              {log.type}
+                            </span>
+                          </td>
+                          <td className="p-4 font-medium text-slate-900">
+                            {log.title}
+                          </td>
+                          <td className="p-4 text-slate-600 whitespace-pre-line">
+                            {log.message}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                <PaginationControls
+                  currentPage={logPage}
+                  setPage={setLogPage}
+                  total={logs}
+                />
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Tab 4: Users Management */}
         {activeTab === "users" && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
@@ -530,7 +670,7 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {filteredUsers.map((u) => (
+                      {paginate(filteredUsers, userPage).map((u) => (
                         <tr
                           key={u.id}
                           className="hover:bg-slate-50/80 transition-colors"
@@ -587,6 +727,11 @@ export default function AdminPage() {
                       ))}
                     </tbody>
                   </table>
+                  <PaginationControls
+                    currentPage={userPage}
+                    setPage={setUserPage}
+                    total={filteredUsers}
+                  />
                 </div>
               )}
             </Card>

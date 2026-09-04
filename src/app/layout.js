@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Smart Parking - Intelligent Real-Time Parking System",
+  title: "Smart Parking System",
   description:
-    "Monitor and manage smart parking slots with real-time IoT integration",
+    "Monitor and manage smart parking slots with IoT integration (Simulator)",
 };
 
 export default function RootLayout({ children }) {
